@@ -1,5 +1,3 @@
-from math import floor
-from collections import Counter
 import cv2 as cv
 import numpy as np
 
@@ -31,7 +29,7 @@ def imageScaling():
     if scaleFactor < 1:
 
         # Calculate how many pixels to remove from each side of the image
-        widthToDelete, heigthToDelete = floor((1 - scaleFactor) * originalWidth), floor((1 - scaleFactor) * originalHeight)
+        widthToDelete, heigthToDelete = int((1 - scaleFactor) * originalWidth), int((1 - scaleFactor) * originalHeight)
 
         # Create list of indices to delete
         rowsToDelete = spread(widthToDelete, originalWidth)
@@ -43,16 +41,15 @@ def imageScaling():
     elif scaleFactor > 1: 
 
         # Calculate new size of the image
-        newWidth, newHeight = floor(originalWidth * scaleFactor), floor(originalHeight * scaleFactor)
+        newWidth, newHeight = int(originalWidth * scaleFactor), int(originalHeight * scaleFactor)
 
-        # Get dict of indices to replicate and how many times to replicate
-        rowsToClone = Counter(spread(newWidth, originalWidth))
-        colsToClone = Counter(spread(newHeight, originalHeight))
+        # Create array of zeros with the new size
+        resizedImg = np.zeros(shape=(newWidth, newHeight), dtype=np.uint8)
 
-        # TODO: Implement nearest neighbor interpolation
-
-
-    # resizedImg = cv.resize(img, (0, 0), fx=scaleFactor, fy=scaleFactor)
+        # Use nearest nighbor to achieve resized image
+        for i in range(newWidth):
+            for j in range(newHeight):
+                resizedImg[i, j] = img[int(i / scaleFactor), int(j / scaleFactor)]
 
     originalImageWindowName = "Original image"
     resizedImageWindowName = "Resized image"
@@ -93,6 +90,7 @@ def imageScaling():
 
 def homomorphicFiltering():
     print("Not yet implemented")
+    #https://cadubentzen.github.io/pdi-ufrn/unit2/homomorphic.html
 
 def notchRejectFilter():
     print("Not yet implemented")
