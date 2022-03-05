@@ -197,30 +197,57 @@ def notchRejectFilter():
     # Take image dimensions
     height, width = img.shape[:2]
 
+    # Coordinates of the center of the image
+    # xCenter, yCenter = width // 2, height // 2
+
+    # Take the natural log of image, do DFT and shift it
+    img_log = np.log(np.float32(img) + 0.01)
+    img_dft = np.fft.fft2(img_log)
+    img_dft_shift = np.fft.fftshift(img_dft)
+
+    # Center of the notch
+    d0 = 50.0
+
+    # List of points in magnitude spectrum to choose
+    points = [[38.1, 30.2], [-42.5, 27.6], [80.2, 30.4], [-82.6, 28.1]]
+
+    for u in range(height):
+            for v in range(width):
+                for d in range(len(points)):
+                    u0 = points[d][0]
+                    v0 = points[d][1]
+                    d1 = pow(((u - u0) ** 2) + ((v - v0) ** 2), 0.5)
+                    d2 = pow(((u + u0) ** 2) + ((v + v0) ** 2), 0.5)
+                    img_dft_shift[u][v] *= (1.0 / (1 + pow((d0 * d0) / (d1 * d2), 4))) 
+                    
+    f_ishift = np.fft.ifftshift(img_dft_shift)
+    filteredImage = np.real(np.fft.ifft2(f_ishift))
+    filteredImage = cv.normalize(filteredImage, None, 0, 255, cv.NORM_MINMAX).astype(np.uint8)
+
     originalImageWindowName = "Original image"
-    # filteredImageWindowName = "Filtered image"
+    filteredImageWindowName = "Filtered image"
 
     # Create a window to display the image
     cv.namedWindow(originalImageWindowName, cv.WINDOW_NORMAL)
-    #Force focus on new window
+    # Force focus on new window
     cv.setWindowProperty(originalImageWindowName, cv.WND_PROP_TOPMOST, 1)
     # Display the image
     cv.imshow(originalImageWindowName, img)
 
-    # # Create a window to display the notch rejected filtered image
-    # cv.namedWindow(filteredImageWindowName, cv.WINDOW_NORMAL)
-    # #Force focus on new window
-    # cv.setWindowProperty(filteredImageWindowName, cv.WND_PROP_TOPMOST, 1)
-    # # Display the notch rejected filtered image
-    # cv.imshow(filteredImageWindowName, filteredImage)
+    # Create a window to display the notch rejected filtered image
+    cv.namedWindow(filteredImageWindowName, cv.WINDOW_NORMAL)
+    # Force focus on new window
+    cv.setWindowProperty(filteredImageWindowName, cv.WND_PROP_TOPMOST, 1)
+    # Display the notch rejected filtered image
+    cv.imshow(filteredImageWindowName, filteredImage)
 
     cv.resizeWindow(originalImageWindowName, img.shape[1], img.shape[0])
-    # cv.resizeWindow(filteredImageWindowName, filteredImage.shape[1], filteredImage.shape[0])
+    cv.resizeWindow(filteredImageWindowName, filteredImage.shape[1], filteredImage.shape[0])
 
-    # # Save the homomomorphic filtered image
-    # saveLocation = f"images/results/image2-homomorphic-{datetime.now().strftime('%Y-%m-%d-%H_%M_%S')}.jpg"
-    # cv.imwrite(saveLocation, filteredImage)
-    # print(f"Image saved to {saveLocation}")
+    # Save the homomomorphic filtered image
+    saveLocation = f"images/results/moire-notch-{datetime.now().strftime('%Y-%m-%d-%H_%M_%S')}.tif"
+    cv.imwrite(saveLocation, filteredImage)
+    print(f"Image saved to {saveLocation}")
 
     # Wait for a key to be pressed
     print("\nPress any key to go back to main menu.\n")
